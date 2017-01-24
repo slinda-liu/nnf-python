@@ -1,4 +1,11 @@
-"""NNPatchMan Module to represent NNPatchMan class."""
+"""
+.. module:: NNPatchMan
+   :platform: Unix, Windows
+   :synopsis: Represent NNPatchMan class.
+
+.. moduleauthor:: Nadith Pathirage <chathurdara@gmail.com>
+"""
+
 # -*- coding: utf-8 -*-
 # Global Imports
 
@@ -12,16 +19,22 @@ class NNPatchMan(NNFramework):
     ----------
     patches : list -NNPatch
         List of NNPatch objects.
-    """
-    def __init__(self, generator, params=[(None, None, True)]):
-        # params is a list of tuples
-        # [(NNdb, Selection, db_in_mem:bool)]       
 
-        super().__init__(params)        
+    _diskmans
+
+    """
+    def __init__(self, generator, params):
+        # params is a list of tuples
+        # [[Alias, NNdb, Selection, db_in_mem:bool, pp_param]]       
+
+        super().__init__(params) 
+
+        if (isinstance(params, dict)):
+            params = [params]
 
         # Init variables
         self.patches = []
-        self._diskman = []
+        self._diskmans = []
 
         # Generate the patches 
         self.patches = generator.generate_patches()

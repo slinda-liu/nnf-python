@@ -1,58 +1,55 @@
-"""DskmanMemDataIterator to represent DskmanMemDataIterator class."""
+"""
+.. module:: DskmanMemDataIterator
+   :platform: Unix, Windows
+   :synopsis: Represent DskmanMemDataIterator class.
+
+.. moduleauthor:: Nadith Pathirage <chathurdara@gmail.com>
+"""
+
 # -*- coding: utf-8 -*-
 # Global Imports
 import numpy as np
 
 # Local Imports
 from nnf.core.iters.DskmanDataIterator import DskmanDataIterator
+from nnf.core.ImagePreProcessingParam import ImagePreProcessingParam
 
 class DskmanMemDataIterator(DskmanDataIterator):
-    """description of class"""
+    """DskmanMemDataIterator represents the diskman iterator for in memory databases.
+
+    Attributes
+    ----------
+    nndb : :obj:`NNdb`
+        Database to iterate.
+
+    Methods
+    -------
+    init()
+        Refer parent class DskmanDataIterator.init(...) method.
+
+    next()
+        Refer parent class DskmanDataIterator.next(...) method.
+
+    Examples
+    --------
+    Construct an iterator, initialize, invoke next().
+    >>> iter = DskmanMemDataIterator(nndb)
+    >>> iter.init(cls_ranges, col_ranges)
+    >>> iter.next()
+    """
 
     #################################################################
     # Public Interface
     #################################################################
-    def __init__(self, nndb,
-                featurewise_center=False,
-                samplewise_center=False,
-                featurewise_std_normalization=False,
-                samplewise_std_normalization=False,
-                zca_whitening=False,
-                rotation_range=0.,
-                width_shift_range=0.,
-                height_shift_range=0.,
-                shear_range=0.,
-                zoom_range=0.,
-                channel_shift_range=0.,
-                fill_mode='nearest',
-                cval=0.,
-                horizontal_flip=False,
-                vertical_flip=False,
-                rescale=None,
-                preprocessing_function=None,
-                dim_ordering='default'
-        ):
-        super().__init__(featurewise_center=featurewise_center,
-                samplewise_center=samplewise_center,
-                featurewise_std_normalization=featurewise_std_normalization,
-                samplewise_std_normalization=samplewise_std_normalization,
-                zca_whitening=zca_whitening,
-                rotation_range=rotation_range,
-                width_shift_range=width_shift_range,
-                height_shift_range=height_shift_range,
-                shear_range=shear_range,
-                zoom_range=zoom_range,
-                channel_shift_range=channel_shift_range,
-                fill_mode=fill_mode,
-                cval=cval,
-                horizontal_flip=horizontal_flip,
-                vertical_flip=vertical_flip,
-                rescale=rescale,
-                preprocessing_function=preprocessing_function,
-                dim_ordering=dim_ordering)
+    def __init__(self, nndb, pp_params):
+        """Construct a DskmanMemDataIterator object.
 
-        # TODO: expose the pre-processing capability via parent property self._gen_data
-
+        Parameters
+        ----------
+        nndb : :obj:`NNdb`
+            Database to iterate.
+        """
+        super().__init__(pp_params)
         self.nndb = nndb
 
     #################################################################

@@ -1,4 +1,11 @@
-"""NNModel to represent NNModel class."""
+"""
+.. module:: NNModel
+   :platform: Unix, Windows
+   :synopsis: Represent NNModel class.
+
+.. moduleauthor:: Nadith Pathirage <chathurdara@gmail.com>
+"""
+
 # -*- coding: utf-8 -*-
 # Global Imports
 
@@ -9,14 +16,15 @@
 import nnf.db.NNPatch
 
 class NNModel(object):
-    def __init__(self, patches, iterstore):
+    def __init__(self, patches, dict_iterstore, list_iterstore):
 
         # Initialize instance variables
-        self._iterstore = []
+        self.dict_iterstore = None
+        self.list_iterstore = None
         self.patches = []
 
-        # Set iterators store [(Tr, Val, Te), ...]
-        self.set_iterstore(iterstore)
+        # Init iterators store [(Tr, Val, Te), ...]
+        self.init_iterstores(dict_iterstore, list_iterstore)
 
         # Add patch(s)
         if (patches is None): return
@@ -28,8 +36,9 @@ class NNModel(object):
         else:
             self.patches.append(patches)
 
-    def set_iterstore(self, iterstore):
-        self._iterstore = iterstore
+    def init_iterstores(self, dict_iterstore, list_iterstore):
+        self.dict_iterstore = dict_iterstore
+        self.list_iterstore = list_iterstore
 
     # USED: in Model based frameworks
     def _init_patches(self):

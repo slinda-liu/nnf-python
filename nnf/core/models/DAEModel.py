@@ -1,4 +1,11 @@
-"""DAEModel to represent DAEModel class."""
+"""
+.. module:: DAEModel
+   :platform: Unix, Windows
+   :synopsis: Represent DAEModel class.
+
+.. moduleauthor:: Nadith Pathirage <chathurdara@gmail.com>
+"""
+
 # -*- coding: utf-8 -*-
 # Global Imports
 from keras.layers import Input, Dense
@@ -12,31 +19,32 @@ from nnf.core.models.Autoencoder import Autoencoder
 from nnf.core.iters.DataIterator import DataIterator
 from nnf.db.NNdb import NNdb
 from nnf.db.Format import Format
+from nnf.db.Dataset import Dataset
 
 class DAEModel(NNModel):
     """Generic deep order encoder model
     
        Extend this class to implement specific auto encoder models
     """
-    def __init__(self, patch, iterstore):   
-        super().__init__(patch, iterstore)
+    def __init__(self, patch, dict_iterstore, list_iterstore):   
+        super().__init__(patch, dict_iterstore, list_iterstore)
 
         # Initialize instance variables
-        self.X_gen = self.X_val_gen = self.Xte_gen = None
+        # Refer init_iterstores()
 
-        # Initialize iterators
-        if (self._iterstore is not None):
-            (self.X_gen, self.X_val_gen, self.Xte_gen) = self._iterstore[0]
     
-    # Model based framework will set the iterstore via set_iterstore() 
+    # Model based framework will set the iterstore via init_iterstores().
     # due to iterstores being not created during the model creation.
-    # In contrast Patch based framework set the iterator store in the constructor.
-    def set_iterstore(self, iterstore):
-        super().set_iterstore(iterstore)
+    # In contrast Patch based framework init_iterstores() store in the constructor.
+    def init_iterstores(self, dict_iterstore, list_iterstore):
+        super().init_iterstores(dict_iterstore, list_iterstore)
                
          # Initialize iterators
-        if (self._iterstore is not None):
-            (self.X_gen, self.X_val_gen, self.Xte_gen) = self._iterstore[0]
+        if (self.list_iterstore is not None):
+            iterstore = self.list_iterstore[0]            
+            self.X_gen = iterstore.setdefault(Dataset.TR, None)
+            self.X_val_gen = iterstore.setdefault(Dataset.VAL, None)
+            self.Xte_gen = iterstore.setdefault(Dataset.TE, None)
 
     def pre_train(self, daeprecfgs, daecfg):
 
@@ -50,6 +58,9 @@ class DAEModel(NNModel):
         X_gen = self.X_gen
         X_val_gen = self.X_val_gen
 
+        # map of iterators for TR|VAL|TE|... datasets in Autoencoder
+        ae_iterstore = {}
+
         # Iterate through pre-trianing configs and 
         # perform layer-wise pre-training.
         i = 0
@@ -59,11 +70,14 @@ class DAEModel(NNModel):
             X = None
             X_val = None
 
-            # Data from generators    
-            _iterstore = [(X_gen, X_val_gen)]
-    
+            # Data from generators            
+            ae_iterstore.setdefault(Dataset.TR, X_gen)
+            ae_iterstore.setdefault(Dataset.VAL, X_val_gen)
+
             # Create a simple AE
-            ae = Autoencoder(self.patches, _iterstore, X, X_val)
+            ae = Autoencoder(self.patches, 
+                                dict_iterstore=None, list_iterstore=[ae_iterstore], 
+                                X=X, X_val=X_val)
      
             # Using non-generators for external databases
             if (daecfg.use_db != 'generator'):    
@@ -72,7 +86,7 @@ class DAEModel(NNModel):
                 X_val = ae._encode(X_val)
 
             else:                
-                if (_iterstore == [(None, None)]):
+                if (ae_iterstore == [(None, None)]):
                     raise Exception("No data iterators. Check daecfg.use_db option !")   
 
                 # Using generators for NNDb or disk databases            

@@ -17,44 +17,8 @@ class DskmanDataIterator(DataIterator):
     #################################################################
     # Public Interface
     #################################################################
-    def __init__(self, 
-                featurewise_center=False,
-                samplewise_center=False,
-                featurewise_std_normalization=False,
-                samplewise_std_normalization=False,
-                zca_whitening=False,
-                rotation_range=0.,
-                width_shift_range=0.,
-                height_shift_range=0.,
-                shear_range=0.,
-                zoom_range=0.,
-                channel_shift_range=0.,
-                fill_mode='nearest',
-                cval=0.,
-                horizontal_flip=False,
-                vertical_flip=False,
-                rescale=None,
-                preprocessing_function=None,
-                dim_ordering='default'
-        ):
-        super().__init__(featurewise_center=featurewise_center,
-                samplewise_center=samplewise_center,
-                featurewise_std_normalization=featurewise_std_normalization,
-                samplewise_std_normalization=samplewise_std_normalization,
-                zca_whitening=zca_whitening,
-                rotation_range=rotation_range,
-                width_shift_range=width_shift_range,
-                height_shift_range=height_shift_range,
-                shear_range=shear_range,
-                zoom_range=zoom_range,
-                channel_shift_range=channel_shift_range,
-                fill_mode=fill_mode,
-                cval=cval,
-                horizontal_flip=horizontal_flip,
-                vertical_flip=vertical_flip,
-                rescale=rescale,
-                preprocessing_function=preprocessing_function,
-                dim_ordering=dim_ordering)
+    def __init__(self, pp_params):
+        super().__init__(pp_params)
               
         # List of class ranges (list of lists)
         # i.e 
@@ -68,45 +32,11 @@ class DskmanDataIterator(DataIterator):
         self.union_cls_range = []
         self.union_col_range = []
 
-    def init(self, cls_ranges, col_ranges,
-            featurewise_center=False,
-            samplewise_center=False,
-            featurewise_std_normalization=False,
-            samplewise_std_normalization=False,
-            zca_whitening=False,
-            rotation_range=0.,
-            width_shift_range=0.,
-            height_shift_range=0.,
-            shear_range=0.,
-            zoom_range=0.,
-            channel_shift_range=0.,
-            fill_mode='nearest',
-            cval=0.,
-            horizontal_flip=False,
-            vertical_flip=False,
-            rescale=None,
-            preprocessing_function=None,
-            dim_ordering='default'):
+    def init(self, cls_ranges, col_ranges, pp_params=None):
         """Must be called to initalize the iterator"""
-        
-        super().reinit(featurewise_center=featurewise_center,
-                        samplewise_center=samplewise_center,
-                        featurewise_std_normalization=featurewise_std_normalization,
-                        samplewise_std_normalization=samplewise_std_normalization,
-                        zca_whitening=zca_whitening,
-                        rotation_range=rotation_range,
-                        width_shift_range=width_shift_range,
-                        height_shift_range=height_shift_range,
-                        shear_range=shear_range,
-                        zoom_range=zoom_range,
-                        channel_shift_range=channel_shift_range,
-                        fill_mode=fill_mode,
-                        cval=cval,
-                        horizontal_flip=horizontal_flip,
-                        vertical_flip=vertical_flip,
-                        rescale=rescale,
-                        preprocessing_function=preprocessing_function,
-                        dim_ordering=dim_ordering)
+
+        # gen_next is ignored since using a custom 'self._gen_next' below
+        super().init(gen_next=None, pp_params=pp_params)
 
         # List of class ranges
         self.cls_ranges = cls_ranges

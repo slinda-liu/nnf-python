@@ -19,6 +19,10 @@ class Dataset(Enum):
         return self.value
 
     @staticmethod
+    def get_enum_list():
+        return [Dataset.TR, Dataset.VAL, Dataset.TE, Dataset.TR_OUT, Dataset.VAL_OUT]
+
+    @staticmethod
     def enum(int_value):
         if (int_value == 0):
             return Dataset.TR

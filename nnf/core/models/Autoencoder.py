@@ -9,12 +9,13 @@ import numpy as np
 
 # Local Imports
 from nnf.core.models.NNModel import NNModel
+from nnf.db.Dataset import Dataset
 
 class Autoencoder(NNModel):
     """description of class"""
 
-    def __init__(self, patch, iterstore, X=None, X_val=None):   
-        super().__init__(patch, iterstore)
+    def __init__(self, patch, dict_iterstore=None, list_iterstore=None, X=None, X_val=None):   
+        super().__init__(patch, dict_iterstore, list_iterstore)
 
         # Initialize variables
         self.autoencoder = None
@@ -23,12 +24,27 @@ class Autoencoder(NNModel):
         self.cb_early_stop = None
 
         # Initialize iterators
-        if (self._iterstore is not None):
-            (self.in_X_gen, self.in_X_val_gen) = self._iterstore[0]
+        if (self.list_iterstore is not None):
+            iterstore = self.list_iterstore[0]            
+            self.X_gen, self.X_val_gen, self.Xte_gen = \
+                        iterstore[Dataset.TR], iterstore[Dataset.VAL], iterstore[Dataset.TE]
         
         # Used when data is fetched from no iterators
         self.X = X
         self.X_val = X_val
+
+    # Model based framework will set the iterstore via init_iterstores() 
+    # due to iterstores being not created during the model creation.
+    # In contrast Patch based framework set the iterator store in the constructor.
+    def init_iterstores(self, dict_iterstore, list_iterstore):
+        super().init_iterstores(dict_iterstore, list_iterstore)
+               
+         # Initialize iterators
+        if (self.list_iterstore is not None):
+            iterstore = self.list_iterstore[0]
+            self.X_gen = iterstore.setdefault(Dataset.TR, None)
+            self.X_val_gen = iterstore.setdefault(Dataset.VAL, None)
+            self.Xte_gen = iterstore.setdefault(Dataset.TE, None)
 
     def build(self, input_dim=784,  hidden_dim=32, output_dim=784, 
                 enc_activation='sigmoid', enc_weights=None, 
@@ -98,7 +114,7 @@ class Autoencoder(NNModel):
             return (self.X, self.X_val)
 
         # Training with generators
-        self._train(X_gen=self.in_X_gen, X_val_gen=self.in_X_val_gen)
+        self._train(X_gen=self.X_gen, X_val_gen=self.X_val_gen)
         return (None, None)
 
     def _train(self, X=None, XT=None, X_val=None, XT_val=None, X_gen=None, X_val_gen=None):

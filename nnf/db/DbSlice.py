@@ -1,4 +1,11 @@
-"""DBSLICE Module to represent DbSlice class."""
+"""
+.. module:: DbSlice
+   :platform: Unix, Windows
+   :synopsis: Represent DbSlice class.
+
+.. moduleauthor:: Nadith Pathirage <chathurdara@gmail.com>
+"""
+
 # -*- coding: utf-8 -*-
 # Global Imports
 import scipy.misc
@@ -17,6 +24,7 @@ from nnf.db.Selection import *
 from nnf.db.Dataset import Dataset
 from nnf.core.iters.memory.DskmanMemDataIterator import DskmanMemDataIterator
 from nnf.core.generators.NNPatchGenerator import NNPatchGenerator
+from nnf.core.ImagePreProcessingParam import ImagePreProcessingParam
 
 class DbSlice(object):
     """Perform slicing of nndb with the help of a selection structure.
@@ -32,7 +40,7 @@ class DbSlice(object):
     sel.te_col_indices      = None    # Testing column indices
     sel.nnpatches           = None    # NNPatch object array
     sel.use_rgb             = True    # Use rgb or convert to grayscale
-    sel.color_index         = None    # Specific color indices (set .use_rgb = false)
+    sel.color_indices       = None    # Specific color indices (set .use_rgb = false)
     sel.use_real            = False   # Use real valued database TODO: (if .normalize = true, Operations ends in real values)  # noqa E501
     sel.scale               = None    # Scaling factor (resize factor)
     sel.normalize           = False   # Normalize (0 mean, std = 1)
@@ -75,11 +83,10 @@ class DbSlice(object):
     ##########################################################################
     def safe_slice(nndb, sel=None):
         """Thread Safe"""
-        self._data_generator = DskmanMemDataIterator(nndb)
-        DbSlice.slice(nndb, sel, self._data_generator)
+        DbSlice.slice(nndb, sel, DskmanMemDataIterator(nndb))
 
     @staticmethod
-    def slice(nndb, sel=None, data_generator=None):
+    def slice(nndb, sel=None, data_generator=None, pp_param=None):
         """Slice the database according to the selection structure.
 
         Parameters
@@ -89,29 +96,6 @@ class DbSlice(object):
 
         sel : selection structure
             Information to split the dataset.
-
-            i.e
-            Selection Structure (with defaults)
-            -----------------------------------
-            sel.tr_col_indices      = None    # Training column indices
-            sel.tr_noise_mask       = None    # Noisy tr. col indices (bit mask)
-            sel.tr_noise_rate       = None    # Rate or noise types for the above field
-            sel.tr_out_col_indices  = None    # Training target column indices
-            sel.val_col_indices     = None    # Validation column indices
-            sel.val_out_col_indices = None    # Validation target column indices
-            sel.te_col_indices      = None    # Testing column indices
-            sel.nnpatches           = None    # NNPatch object array
-            sel.use_rgb             = True    # Use rgb or convert to grayscale
-            sel.color_index         = None    # Specific color indices (set .use_rgb = false)
-            sel.use_real            = False   # Use real valued database TODO: (if .normalize = true, Operations ends in real values)  # noqa E501
-            sel.scale               = None    # Scaling factor (resize factor)
-            sel.normalize           = False   # Normalize (0 mean, std = 1)
-            sel.histeq              = False   # Histogram equalization
-            sel.histmatch           = False   # Histogram match (ref. image: first image of the class)  # noqa E501
-            sel.class_range         = None    # Class range for training database or all (tr, val, te)
-            sel.val_class_range     = None    # Class range for validation database
-            sel.te_class_range      = None    # Class range for testing database
-            sel.pre_process_script  = None    # Custom preprocessing script
 
         Returns
         -------
@@ -153,7 +137,7 @@ class DbSlice(object):
             sel.te_col_indices = None
             sel.nnpatches = None
             sel.use_rgb = True
-            sel.color_index = None
+            sel.color_indices = None
             sel.use_real = False
             sel.scale = None
             sel.normalize = False
@@ -173,7 +157,7 @@ class DbSlice(object):
         if (not hasattr(sel, 'te_col_indices')): sel.te_col_indices = None  # noqa E701
         if (not hasattr(sel, 'nnpatches')): sel.nnpatches = None  # noqa E701
         if (not hasattr(sel, 'use_rgb')): sel.use_rgb = True  # noqa E701
-        if (not hasattr(sel, 'color_index')): sel.color_index = None  # noqa E701
+        if (not hasattr(sel, 'color_indices')): sel.color_indices = None  # noqa E701
         if (not hasattr(sel, 'use_real')): sel.use_real = False  # noqa E701
         if (not hasattr(sel, 'resize')): sel.resize = None  # noqa E701
         if (not hasattr(sel, 'normalize')): sel.normalize = False  # noqa E701
@@ -194,8 +178,8 @@ class DbSlice(object):
             raise Exception('ARG_ERR: [tr|tr_out|val|val_out|te]_col_indices: mandory field')  # noqa E501
 
         if (sel.use_rgb and
-           sel.color_index is not None):
-            raise Exception('ARG_CONFLICT: sel.use_rgb, sel.color_index')
+           sel.color_indices is not None):
+            raise Exception('ARG_CONFLICT: sel.use_rgb, sel.color_indices')
 
         if (sel.tr_noise_mask is not None and
            sel.tr_noise_rate is None):
@@ -204,7 +188,7 @@ class DbSlice(object):
         # Set defaults for data generator   
         if (data_generator is None):
             # Safe iterator object for repeated static calls DbSlice.slice()
-            DbSlice._data_generator  = DskmanMemDataIterator(nndb) if (DbSlice._data_generator is None) else DbSlice._data_generator
+            DbSlice._data_generator  = DskmanMemDataIterator(nndb, pp_param) if (DbSlice._data_generator is None) else DbSlice._data_generator
             data_generator =  DbSlice._data_generator
 
         # Set defaults for class range (tr|val|te|...)
@@ -317,10 +301,10 @@ class DbSlice(object):
                         # Check whether col_idx is a noise required index 
                         process_noise = False
                         noise_rate = None
-                        for nf in nf_indices:
-                            if (col_idx == sel.tr_col_indices[nf]):
+                        for nri in noise_req_indices:
+                            if (col_idx == sel.tr_col_indices[nri]):
                                 process_noise = True
-                                noise_rate = sel.tr_noise_rate[nf]
+                                noise_rate = sel.tr_noise_rate[nri]
                                 break
 
                         [nndbs, samples] =\
@@ -353,13 +337,15 @@ class DbSlice(object):
                     dict_nndbs[Dataset.VAL][0],\
                     dict_nndbs[Dataset.TE][0],\
                     dict_nndbs[Dataset.TR_OUT][0],\
-                    dict_nndbs[Dataset.VAL_OUT][0]
+                    dict_nndbs[Dataset.VAL_OUT][0],\
+                    [Dataset.TR, Dataset.VAL, Dataset.TE, Dataset.TR_OUT, Dataset.VAL_OUT]
 
         return  dict_nndbs[Dataset.TR],\
                 dict_nndbs[Dataset.VAL],\
                 dict_nndbs[Dataset.TE],\
                 dict_nndbs[Dataset.TR_OUT],\
-                dict_nndbs[Dataset.VAL_OUT]
+                dict_nndbs[Dataset.VAL_OUT],\
+                [Dataset.TR, Dataset.VAL, Dataset.TE, Dataset.TR_OUT, Dataset.VAL_OUT]
 
     @staticmethod
     def examples(imdb_8):
@@ -374,7 +360,7 @@ class DbSlice(object):
         sel.tr_cm_col_indices     = None
         sel.te_col_indices        = [4:6] #[4 5 6]
         sel.use_rgb               = False
-        sel.color_index           = None
+        sel.color_indices         = None
         sel.use_real              = False
         sel.scale                 = 0.5
         sel.normalize             = False
@@ -563,7 +549,7 @@ class DbSlice(object):
         sel.tr_col_indices = np.array([0, 1, 3])
         sel.te_col_indices = np.array([2, 4])
         sel.use_rgb = False
-        sel.color_index = 5  # color channel denoted by 5th index
+        sel.color_indices = 5  # color channel denoted by 5th index
         [nndb_tr, _, nndb_te, _, _] = DbSlice.slice(nndb, sel)
 
     ##########################################################################
@@ -624,7 +610,6 @@ class DbSlice(object):
         """Set the value of the class range at default_idx 
             to the class ranges at other indices [val|te|tr_out|val_out]
         """
-
         for rng_idx in range(len(col_ranges)):
             if (col_ranges[rng_idx] is not None and 
                 cls_ranges[rng_idx] is None):
@@ -633,11 +618,11 @@ class DbSlice(object):
     @staticmethod
     def _init_nndb(name, sel, nndb, n_per_class, cls_n, build_cls_idx):
         """Initialize a new NNdb object lists.
-                    
+
         Returns
         -------
-        new_nndbs : list- NNdb
-            new NNdb object(s).
+        new_nndbs : :obj:`list` of :obj:`NNdb`
+            NNdb objects for each patch.
         """
         # n_per_class: must be a scalar
         if (n_per_class == 0): return  # noqa E701
@@ -663,7 +648,7 @@ class DbSlice(object):
             # Channels for the new NNdb objects
             ch = nndb.ch
             if (not sel.use_rgb):
-                ch = 0 if (sel.color_index is None) else np.size(sel.color_index) # Selected color channels 
+                ch = 0 if (sel.color_indices is None) else np.size(sel.color_indices) # Selected color channels 
                 if (ch == 0): ch = 1  # Grayscale  # noqa E701
 
             if (sel.nnpatches is not None):
@@ -695,7 +680,7 @@ class DbSlice(object):
 
         Returns
         -------
-        img : 3D tensor -uint8
+        img : array_like -uint8
             Color processed image.
         """
         if (img is None): return  # noqa E701
@@ -706,8 +691,8 @@ class DbSlice(object):
 
             # if image has more than 3 channels
             if (ch >= 3):
-                if (sel.color_index is not None):
-                    X = img[:, :, sel.color_index]
+                if (sel.color_indices is not None):
+                    X = img[:, :, sel.color_indices]
                 else:
                     X = rgb2gray(img, keepDims=True)
             else:
@@ -723,11 +708,11 @@ class DbSlice(object):
 
         Returns
         -------
-        nndbs : cell- NNdb
-            Updated NNdb objects.
+        nndbs : :obj:`list` of :obj:`NNdb`
+            NNdb objects for each patch.
 
-        samples : vector -uint16
-            Updated image count vector.
+        samples : array_like -uint16
+            1D vector of image counts for each patch.
         """
         if (nndbs is None): return nndbs, samples  # noqa E701
         nndb = nndbs[pi]    
@@ -778,9 +763,9 @@ class DbSlice(object):
 
         Returns
         -------
-        img : 3D tensor -uint8
-            Corrupted image.
-        """
+        img : array_like -uint8
+            3D-Data tensor that contains the corrupted image.
+        """        
         percentage_white = 50  # Alter this value as desired
 
         dot_pat = np.zeros((height, width), dtype='uint8')
@@ -801,14 +786,14 @@ class DbSlice(object):
     @staticmethod
     def _build_nndb_tr_out(nndbs, pi, samples, img):
         """Build the nndb training target database.
-                    
+
         Returns
         -------
-        nndbs : cell- NNdb
-            Updated NNdb objects.
-        
-        samples : vector -uint16
-            Updated image count vector.
+        nndbs : :obj:`list` of :obj:`NNdb`
+            NNdb objects for each patch.
+
+        samples : array_like -uint16
+            1D vector of image counts for each patch.
         """
         if (nndbs is None): return nndbs, samples
         nndb = nndbs[pi]
@@ -821,14 +806,14 @@ class DbSlice(object):
     @staticmethod
     def _build_nndb_val(nndbs, pi, samples, img):
         """"Build the nndb validation database.
-                    
+
         Returns
         -------
-        nndbs : cell- NNdb
-            Updated NNdb objects.
-        
-        samples : vector -uint16
-            Updated image count vector.
+        nndbs : :obj:`list` of :obj:`NNdb`
+            NNdb objects for each patch.
+
+        samples : array_like -uint16
+            1D vector of image counts for each patch.
         """
         if (nndbs is None): return nndbs, samples
         nndb = nndbs[pi]
@@ -841,14 +826,14 @@ class DbSlice(object):
     @staticmethod
     def _build_nndb_val_out(nndbs, pi, samples, img):
         """"Build the nndb validation target database.
-                    
+
         Returns
         -------
-        nndbs : cell- NNdb
-            Updated NNdb objects.
-        
-        samples : vector -uint16
-            Updated image count vector.
+        nndbs : :obj:`list` of :obj:`NNdb`
+            NNdb objects for each patch.
+
+        samples : array_like -uint16
+            1D vector of image counts for each patch.
         """
         if (nndbs is None): return nndbs, samples
         nndb = nndbs[pi]
@@ -861,14 +846,14 @@ class DbSlice(object):
     @staticmethod
     def _build_nndb_te(nndbs, pi, samples, img):
         """Build the testing database.
-                    
+
         Returns
         -------
-        nndbs : cell- NNdb
-            Updated NNdb objects.
+        nndbs : :obj:`list` of :obj:`NNdb`
+            NNdb objects for each patch.
         
-        samples : vector -uint16
-            Updated image count vector.
+        samples : array_like -uint16
+            1D vector of image counts for each patch.
         """
         if (nndbs is None): return nndbs, samples
         nndb = nndbs[pi]

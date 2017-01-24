@@ -1,4 +1,11 @@
-"""NNDB Module to represent NNdb class."""
+"""
+.. module:: NNdb
+   :platform: Unix, Windows
+   :synopsis: Represent NNdb class.
+
+.. moduleauthor:: Nadith Pathirage <chathurdara@gmail.com>
+"""
+
 # -*- coding: utf-8 -*-
 # Global Imports
 import numpy as np
@@ -11,7 +18,7 @@ from nnf.utl.immap import immap
 
 
 class NNdb(object):
-    """NNDB represents database for NNFramwork.
+    """NNdb represents database for NNFramwork.
 
     Attributes
     ----------
@@ -69,12 +76,6 @@ class NNdb(object):
 
     Database with given class labels
     >>> nndb = NNdb('any_name', imdb, [4 3], false, [1 1 1 1 2 2 2])
-
-    Notes
-    -----
-    Copyright 2015-2016 Nadith Pathirage, Curtin University.
-    (chathurdara@gmail.com).
-
     """
 
     #################################################################

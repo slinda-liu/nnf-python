@@ -31,25 +31,34 @@ class NNPatch(object):
         self._user_data = {}
         self.models = []
 
+    def __eq__(self, patch):
+        iseq = False
+        if ((self.h == patch.h) and
+            (self.w == patch.w) and
+            (self.offset == patch.offset)):
+            iseq = True
+
+        return iseq
+
     def add_model(self, models):
         if (isinstance(models, list)):
             self.models = self.models + models
         else:
             self.models.append(models)
 
-    def _init_models(self, iterstore):
+    def _init_models(self, dict_iterstore, list_iterstore):
         """Patch Based Framewowk"""
-        self.add_model(self.generate_nnmodels(iterstore))
+        self.add_model(self.generate_nnmodels(dict_iterstore, list_iterstore))
 
         # Assign this patch to the model
         for model in self.models:
             model.add_patches(self)
 
-    def _set_udata(self, key, value):
-       self._user_data[key] = value
+    def _set_udata(self, ekey, value):
+       self._user_data[ekey] = value
 
-    def _get_udata(self, key):
-        return self._user_data[key]
+    def _get_udata(self, ekey):
+        return self._user_data[ekey]
 
     def generate_nnmodels(self, iterstore):
         """overiddable"""

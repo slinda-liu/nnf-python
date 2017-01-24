@@ -16,46 +16,8 @@ class DskmanDskDataIterator(DskmanDataIterator):
     #################################################################
     # Public Interface
     #################################################################
-    def __init__(self, directory,
-                featurewise_center=False,
-                samplewise_center=False,
-                featurewise_std_normalization=False,
-                samplewise_std_normalization=False,
-                zca_whitening=False,
-                rotation_range=0.,
-                width_shift_range=0.,
-                height_shift_range=0.,
-                shear_range=0.,
-                zoom_range=0.,
-                channel_shift_range=0.,
-                fill_mode='nearest',
-                cval=0.,
-                horizontal_flip=False,
-                vertical_flip=False,
-                rescale=None,
-                preprocessing_function=None,
-                dim_ordering='default'
-        ):
-        super().__init__(featurewise_center=featurewise_center,
-                samplewise_center=samplewise_center,
-                featurewise_std_normalization=featurewise_std_normalization,
-                samplewise_std_normalization=samplewise_std_normalization,
-                zca_whitening=zca_whitening,
-                rotation_range=rotation_range,
-                width_shift_range=width_shift_range,
-                height_shift_range=height_shift_range,
-                shear_range=shear_range,
-                zoom_range=zoom_range,
-                channel_shift_range=channel_shift_range,
-                fill_mode=fill_mode,
-                cval=cval,
-                horizontal_flip=horizontal_flip,
-                vertical_flip=vertical_flip,
-                rescale=rescale,
-                preprocessing_function=preprocessing_function,
-                dim_ordering=dim_ordering)
-
-        # TODO: expose the pre-processing capability via parent property self._gen_data
+    def __init__(self, db_dir, save_dir, pp_params):
+        super().__init__(pp_params)
         
         # Class count, will be updated below
         self.cls_n = 0 
@@ -79,17 +41,17 @@ class DskmanDskDataIterator(DskmanDataIterator):
         cls_idx = 0
 
         # Iterate the directory and populate self.paths dictionary
-        for root, dirs, files in _recursive_list(directory):
+        for root, dirs, files in _recursive_list(db_dir):
 
             # Exclude this directory itself
-            if (root == directory):
+            if (root == db_dir):
                 continue
             
             # Extract the directory
             dir = root[(root.rindex ('\\')+1):]
         
             # Exclude the internally used data folder
-            if (dir == nnf.core.NNDiskMan.NNDiskMan._SAVE_TO_DIR):
+            if (dir == save_dir):
                 continue
 
             # Since dir is considered to be a class name, give the explicit internal index
